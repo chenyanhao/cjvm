@@ -1,0 +1,97 @@
+//
+// Created by cyh on 2018/6/15.
+//
+
+#ifndef CJVM_ACCESSFLAG_H
+#define CJVM_ACCESSFLAG_H
+
+enum class ClassAccess {
+    ACC_PUBLIC = 0x001,
+    ACC_FINAL = 0x0010,
+    ACC_SUPER = 0x0020,
+    ACC_INTERFACE = 0x0200,
+    ACC_ABSTRACT = 0x0400,
+    ACC_SYNTHETIC = 0x1000,
+    ACC_ANNOTATION = 0x2000,
+    ACC_ENUM = 0x4000
+};
+
+
+enum class MethodAccess {
+    ACC_PUBLIC = 0X0001,
+    ACC_PRIVATE = 0X0002,
+    ACC_PROTECTED = 0X0004,
+    ACC_STATIC = 0X0008,
+    ACC_FINAL = 0X0010,
+    ACC_SYNCHRONIZED = 0X0020,
+    ACC_BRIDGE = 0X0040,
+    ACC_VARARGS = 0X0080,
+    ACC_NATIVE = 0X0100,
+    ACC_ABSTRACT = 0X0400,
+    ACC_STRICT = 0X0800,
+    ACC_SYNTHETIC = 0X1000 //Declared synthetic; not present in the source code.
+};
+
+
+enum class FieldAccess {
+    ACC_PUBLIC = 0x0001,
+    ACC_PRIVATE = 0x0002,
+    ACC_PROTECTED = 0x0004,
+    ACC_STATIC = 0x0008,
+    ACC_FINAL = 0x0010,
+    ACC_VOLATILE = 0x0040,
+    ACC_TRANSIENT = 0x0080,
+    ACC_SYNTHETIC = 0x1000,
+    ACC_ENUM = 0x4000
+};
+
+
+#define IS_FIELD(ACC_NAME) \
+    inline bool IS_FIELD_##ACC_NAME(int value)	{ \
+        return (value & (int) FieldAccess::ACC_##ACC_NAME) !=0; \
+    }
+
+#define IS_METHOD(ACC_NAME) \
+    inline bool IS_METHOD_##ACC_NAME(int value)	{ \
+        return (value & (int) MethodAccess::ACC_##ACC_NAME) !=0; \
+    }
+
+#define IS_CLASS(ACC_NAME) \
+    inline bool IS_CLASS_##ACC_NAME(int value) { \
+        return (value & (int) ClassAccess::ACC_##ACC_NAME) !=0; \
+    }
+
+
+IS_METHOD(PUBLIC)
+IS_METHOD(PRIVATE)
+IS_METHOD(PROTECTED)
+IS_METHOD(STATIC)
+IS_METHOD(FINAL)
+IS_METHOD(SYNCHRONIZED)
+IS_METHOD(BRIDGE)
+IS_METHOD(VARARGS)
+IS_METHOD(NATIVE)
+IS_METHOD(ABSTRACT)
+IS_METHOD(STRICT)
+IS_METHOD(SYNTHETIC)
+
+IS_FIELD(PUBLIC)
+IS_FIELD(PRIVATE)
+IS_FIELD(PROTECTED)
+IS_FIELD(STATIC)
+IS_FIELD(FINAL)
+IS_FIELD(VOLATILE)
+IS_FIELD(TRANSIENT)
+IS_FIELD(SYNTHETIC)
+IS_FIELD(ENUM)
+
+IS_CLASS(PUBLIC)
+IS_CLASS(FINAL)
+IS_CLASS(SUPER)
+IS_CLASS(INTERFACE)
+IS_CLASS(ABSTRACT)
+IS_CLASS(SYNTHETIC)
+IS_CLASS(ANNOTATION)
+IS_CLASS(ENUM)
+
+#endif //CJVM_ACCESSFLAG_H

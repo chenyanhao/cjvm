@@ -7,7 +7,7 @@ add_compile_options(-O1)
 
 set(CMAKE_EXE_LINKER_FLAGS "-lpthread")
 
-set(SOURCE_FILES src/Type.h src/Util.h src/ClassFile.h "src/FileReader .h" src/Test.cpp src/Test.h)
+set(SOURCE_FILES src/Type.h src/Util.h src/ClassFile.h "src/FileReader .h" src/JavaType.h src/AccessFlag.h src/Concurrent.cpp src/Concurrent.hpp)
 add_executable(cjvm ${SOURCE_FILES})
 
 target_link_libraries(cjvm pthread)
