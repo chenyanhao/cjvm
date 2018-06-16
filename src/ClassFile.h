@@ -56,18 +56,21 @@ enum VariableInfoTag {
  ****************************************************************************/
 
 class ConstantPoolInfo {
+public:
     virtual ~ConstantPoolInfo() = default;
 };
 
 
 #define DEF_CONSTANT_WITH_2_FIELDS(name, type, field) \
 class CONSTANT_##name : public ConstantPoolInfo { \
+public: \
     static const u1 tag = ConstantTag::TAG_##name; \
     type field; \
 };
 
 #define DEF_CONSTANT_WITH_3_FIELDS(name, type1, field1, type2, field2) \
 class CONSTANT_##name : public ConstantPoolInfo { \
+public: \
     static const u1 tag = ConstantTag::TAG_##name; \
     type1 field1; \
     type2 field2; \
@@ -75,6 +78,7 @@ class CONSTANT_##name : public ConstantPoolInfo { \
 
 #define DEF_CONSTANT_WITH_4_FIELDS(name,type1,field1,type2,field2,type3,field3) \
 class CONSTANT_##name : public ConstantPoolInfo{ \
+public: \
     static const u1 tag = ConstantTag::TAG_##name; \
     type1 field1; \
     type2 field2; \
@@ -112,6 +116,7 @@ DEF_CONSTANT_WITH_3_FIELDS(InvokeDynamic, u2, bootstrapMethodAttrIndex, u2, name
  * 所以这里没有用宏来定义。
  */
 class CONSTANT_Utf8 : public ConstantPoolInfo {
+public:
     static const u1 tag = ConstantTag::TAG_Utf8;
     u2 length;
     u1 *bytes;
@@ -129,6 +134,7 @@ class CONSTANT_Utf8 : public ConstantPoolInfo {
  ****************************************************************************/
 
 class AttributeInfo {
+public:
     u2 attributeNameIndex;
     u4 attributeLength;
     virtual ~AttributeInfo() = default;
@@ -138,10 +144,12 @@ class AttributeInfo {
 class ATTR_##name : public AttributeInfo
 
 DEF_ATTR_START(ConstantValue) {
+public:
     u2 constantValueIndex;
 };
 
 DEF_ATTR_START(Code) {
+public:
     u2 maxStack;
     u2 maxLocals;
 
@@ -173,16 +181,19 @@ DEF_ATTR_START(Code) {
 
 
 class VerificationTypeInfo {
+public:
     virtual ~VerificationTypeInfo() = default;
 };
 
 #define DEF_VARIABLE_INFO_WITH_1_FIELDS(name) \
 class VariableInfo_##name : public VerificationTypeInfo { \
+public: \
     static const u1 tag = VariableInfoTag::ITEM_##name; \
 };
 
 #define DEF_VARIABLE_INFO_WITH_2_FIELDS(name, type, field) \
 class VariableInfo_##name : public VerificationTypeInfo { \
+public: \
     static const u1 tag = VariableInfoTag::ITEM_##name; \
     type field; \
 };
@@ -199,15 +210,18 @@ DEF_VARIABLE_INFO_WITH_1_FIELDS(Double);
 
 
 class StackMapFrame {
+public:
     virtual ~StackMapFrame() = default;
 };
 
 #define DEF_FRAME_TYPE_WITH_1_FIELDS(name)  \
 class Frame_##name : public StackMapFrame{    \
+public: \
     u2 frameType;   \
 };
 #define DEF_FRAME_TYPE_WITH_2_FIELDS(name,type,field)  \
 class Frame_##name : public StackMapFrame{\
+public: \
     u2 frameType;   \
     type field;     \
 };
@@ -223,6 +237,7 @@ DEF_FRAME_TYPE_WITH_2_FIELDS(Chop,u2,offsetDelta);
 DEF_FRAME_TYPE_WITH_2_FIELDS(Same_frame_extended,u2,offsetDelta);
 
 class Frame_Same_locals_1_stack_item : public StackMapFrame {
+public:
     u2 frameType;
     VerificationTypeInfo **stack;
 
@@ -233,6 +248,7 @@ class Frame_Same_locals_1_stack_item : public StackMapFrame {
 };
 
 class Frame_Same_locals_1_stack_item_extended : public StackMapFrame {
+public:
     u2 frameType;
     u2 offsetDelta;
     VerificationTypeInfo **stack;
@@ -244,6 +260,7 @@ class Frame_Same_locals_1_stack_item_extended : public StackMapFrame {
 };
 
 class Frame_Append : public StackMapFrame {
+public:
     u2 frameType;
     u2 offsetDelta;
     VerificationTypeInfo **stack;
@@ -257,6 +274,7 @@ class Frame_Append : public StackMapFrame {
 };
 
 class Frame_Full : public StackMapFrame {
+public:
     u2 frameType;
     u2 offsetDelta;
 
@@ -279,6 +297,7 @@ class Frame_Full : public StackMapFrame {
 };
 
 DEF_ATTR_START(StackMapTable) {
+public:
     u2 numberOfEntries;
     StackMapFrame **entries;
 
@@ -291,6 +310,7 @@ DEF_ATTR_START(StackMapTable) {
 };
 
 DEF_ATTR_START(Exception) {
+public:
     u2 numberOfExceptions;
     u2 *exceptionIndexTable;
 
@@ -300,6 +320,7 @@ DEF_ATTR_START(Exception) {
 };
 
 DEF_ATTR_START(InnerClasses) {
+public:
     u2 numberOfClasses;
     class _Classes {
         u2 innerClassInfoIndex;
@@ -314,17 +335,21 @@ DEF_ATTR_START(InnerClasses) {
 };
 
 DEF_ATTR_START(EnclosingMethod) {
+public:
     u2 classIndex;
     u2 methodIndex;
 };
 DEF_ATTR_START(Synthetic) {};
 DEF_ATTR_START(Signature) {
+public:
     u2 signatureIndex;
 };
 DEF_ATTR_START(SourceFile) {
+public:
     u2 sourceFileIndex;
 };
 DEF_ATTR_START(SourceDebugExtension) {
+public:
     u1 *debugExtension;
     ~ATTR_SourceDebugExtension() override {
         delete[] debugExtension;
@@ -332,6 +357,7 @@ DEF_ATTR_START(SourceDebugExtension) {
 };
 
 DEF_ATTR_START(LineNumberTable) {
+public:
     u2 lineNumberTableLength;
     class _LineNumberTable {
         u2 startPC;
@@ -344,6 +370,7 @@ DEF_ATTR_START(LineNumberTable) {
 };
 
 DEF_ATTR_START(LocalVariableTable) {
+public:
     u2 localVariableTableLength;
     class _LocalVariableTable {
         u2 startPC;
@@ -359,6 +386,7 @@ DEF_ATTR_START(LocalVariableTable) {
 };
 
 DEF_ATTR_START(LocalVariableTypeTable) {
+public:
     u2 localVariableTypeTableLength;
     class _LocalVariableTypeTable {
         u2 startPC;
@@ -378,11 +406,13 @@ DEF_ATTR_START(Deprecated) {};
 
 
 class ElementValue {
+public:
     u1 tag;
     virtual ~ElementValue() = default;
 };
 
 class Annotation {
+public:
     u2 typeIndex;
 
     u2 numElementValuePairs;
@@ -401,19 +431,23 @@ class Annotation {
 
 
 class ElementValue_ConstantValueIndex : public ElementValue {
+public:
     u2 constValueIndex;
 };
 
 class ElementValue_EnumConstValue : public ElementValue {
+public:
     u2 typeNameIndex;
     u2 constNameIndex;
 };
 
 class ElementValue_ClassInfoIndex : public ElementValue {
+public:
     u2 classInfoIndex;
 };
 
 class ElementValue_ArrayValue : public ElementValue {
+public:
     u2 numValues;
     ElementValue **values;
 
@@ -426,10 +460,12 @@ class ElementValue_ArrayValue : public ElementValue {
 };
 
 class ElementValue_Annotation : public ElementValue {
+public:
     Annotation annotationValue;
 };
 
 DEF_ATTR_START(RuntimeVisibleAnnotations) {
+public:
     u2 numAnnotations;
     Annotation *annotations;
 
@@ -439,6 +475,7 @@ DEF_ATTR_START(RuntimeVisibleAnnotations) {
 };
 
 DEF_ATTR_START(RuntimeInvisibleAnnotations) {
+public:
     u2 numAnnotations;
     Annotation *annotations;
 
@@ -448,6 +485,7 @@ DEF_ATTR_START(RuntimeInvisibleAnnotations) {
 };
 
 DEF_ATTR_START(RuntimeVisibleParameterAnnotations) {
+public:
     u1 numParameters;
 
     class _ParameterAnnotations {
@@ -465,6 +503,7 @@ DEF_ATTR_START(RuntimeVisibleParameterAnnotations) {
 };
 
 DEF_ATTR_START(RuntimeInvisibleParameterAnnotations) {
+public:
     u1 numParameters;
 
     class _ParameterAnnotations {
@@ -483,15 +522,18 @@ DEF_ATTR_START(RuntimeInvisibleParameterAnnotations) {
 
 
 class TargetInfo {
+public:
     virtual ~TargetInfo() = default;
 };
 
 #define DEF_TARGET_WITH_1_FIELDS(name,type,field)  \
 class Target_##name : public TargetInfo{   \
+public: \
     type field; \
 };
 #define DEF_TARGET_WITH_2_FIELDS(name,type,field,type1,field1)  \
 class Target_##name : public TargetInfo{   \
+public: \
     type field; \
     type1 field1;   \
 };
@@ -506,6 +548,7 @@ DEF_TARGET_WITH_1_FIELDS(FormalParameter,u1,formalParameter);
 DEF_TARGET_WITH_1_FIELDS(Throws,u2,throwsTypeIndex);
 
 class Target_LocalVar : public TargetInfo {
+public:
     u2 tableLength;
 
     class _Table {
@@ -524,6 +567,7 @@ DEF_TARGET_WITH_1_FIELDS(Offset,u2,offset);
 DEF_TARGET_WITH_2_FIELDS(TypeArgument,u2,offset,u1,typeArgumentIndex);
 
 class TypeAnnotation {
+public:
     u1 targetType;
     TargetInfo *targetInfo;
 
@@ -559,6 +603,7 @@ class TypeAnnotation {
 };
 
 DEF_ATTR_START(RuntimeVisibleTypeAnnotations) {
+public:
     u2 numAnnotations;
     TypeAnnotation *annotations;
 
@@ -568,6 +613,7 @@ DEF_ATTR_START(RuntimeVisibleTypeAnnotations) {
 };
 
 DEF_ATTR_START(RuntimeInvisibleTypeAnnotations) {
+public:
     u2 numAnnotations;
     TypeAnnotation *annotations;
 
@@ -577,6 +623,7 @@ DEF_ATTR_START(RuntimeInvisibleTypeAnnotations) {
 };
 
 DEF_ATTR_START(AnnotationDefault) {
+public:
     ElementValue *defaultValue;
 
     ~ATTR_AnnotationDefault() {
@@ -585,6 +632,7 @@ DEF_ATTR_START(AnnotationDefault) {
 };
 
 DEF_ATTR_START(BootstrapMethods) {
+public:
     u2 numBootstrapMethods;
 
     class _BootstrapMethod {
@@ -603,6 +651,7 @@ DEF_ATTR_START(BootstrapMethods) {
 };
 
 DEF_ATTR_START(MethodParameter) {
+public:
     u1 parameterCount;
 
     class _Parameters {
@@ -744,17 +793,4 @@ public:
 #define IS_STACKFRAME_full_frame(num) ((num) == 255)
 
 
-
-
-
-
 #endif //CJVM_CLASSFILE_H
-
-
-
-
-
-
-
-
-
