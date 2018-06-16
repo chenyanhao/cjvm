@@ -12,8 +12,6 @@
 #include <atomic>
 #include <mutex>
 
-using namespace std;
-
 class SpinLock {
 public:
     SpinLock() = default;
@@ -34,6 +32,35 @@ public:
 private:
     std::atomic_flag flag = ATOMIC_FLAG_INIT;
 };
+
+class ThreadPool {
+public:
+    ThreadPool(): done(false) {}
+    ~ThreadPool() noexcept;
+
+public:
+    virtual void initialize(int startThreadNum) noexcept;
+    virtual void runPendingWork();
+    template<typename Func> std::future<void> submit(Func task);
+    virtual void finalize() { done = true; }
+
+protected:
+    std::atomic_bool done{};
+    std::vector<std::thread> threads;
+    std::queue<std::packaged_task<void()>> taskQueue;
+    std::mutex taskQueueMtx;
+
+};
+
+
+template<typename Func>
+std::future<void> ThreadPool::submit(Func task) {
+    std::packaged_task<void()> pt(task);
+    std::future<void> f = pt.get_future();
+    std::lock_guard<std::mutex> lock(taskQueueMtx);
+    taskQueue.push(std::move(pt));
+    return f;
+}
 
 
 #endif //CJVM_CONCURRENT_H
