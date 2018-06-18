@@ -145,6 +145,129 @@ bool JavaClass::parseConstantPool(u2 cpCount) {
         std::cerr << "Can not allocate memory to load class file\n";
         return false;
     }
+
+    // JVM8 规范说明：常量池中常量的索引从 1 开始，到 constant_pool_count - 1
+    for (int i = 1; i < cpCount - 1; ++i) {
+        u1 tag = reader.readU1();
+        ConstantPoolInfo *slot;
+        switch (tag) {
+            case TAG_Class:
+                slot = new CONSTANT_Class();
+                dynamic_cast<CONSTANT_Class*>(slot)->nameIndex = reader.readU2();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_Class*>(slot);
+                break;
+            case TAG_FieldRef:
+                slot = new CONSTANT_FieldRef();
+                dynamic_cast<CONSTANT_FieldRef*>(slot)->classIndex = reader.readU2();
+                dynamic_cast<CONSTANT_FieldRef*>(slot)->nameAndTypeIndex = reader.readU2();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_FieldRef*>(slot);
+                break;
+            case TAG_MethodRef:
+                slot = new CONSTANT_MethodRef();
+                dynamic_cast<CONSTANT_MethodRef*>(slot)->classIndex = reader.readU2();
+                dynamic_cast<CONSTANT_MethodRef*>(slot)->nameAndTypeIndex = reader.readU2();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_MethodRef*>(slot);
+                break;
+            case TAG_InterfaceMethodRef:
+                slot = new CONSTANT_InterfaceMethodRef();
+                dynamic_cast<CONSTANT_InterfaceMethodRef*>(slot)->classIndex = reader.readU2();
+                dynamic_cast<CONSTANT_InterfaceMethodRef*>(slot)->nameAndTypeIndex = reader.readU2();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_InterfaceMethodRef*>(slot);
+                break;
+            case TAG_String: {
+                slot = new CONSTANT_String();
+                dynamic_cast<CONSTANT_String*>(slot)->stringIndex = reader.readU2();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_String*>(slot);
+                break;
+            }
+            case TAG_Integer: {
+                slot = new CONSTANT_Integer();
+                dynamic_cast<CONSTANT_Integer*>(slot)->bytes = reader.readU4();
+                dynamic_cast<CONSTANT_Integer*>(slot)->val = dynamic_cast<CONSTANT_Integer*>(slot)->bytes;
+
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_Integer*>(slot);
+                break;
+            }
+            case TAG_Float: {
+                slot = new CONSTANT_Float();
+                dynamic_cast<CONSTANT_Float*>(slot)->bytes = reader.readU4();
+                dynamic_cast<CONSTANT_Float*>(slot)->val = *(float*)(&dynamic_cast<CONSTANT_Float*>(slot)->bytes);
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_Float*>(slot);
+                break;
+            }
+            case TAG_Long: {
+                slot = new CONSTANT_Long();
+                dynamic_cast<CONSTANT_Long*>(slot)->highBytes = reader.readU2();
+                dynamic_cast<CONSTANT_Long*>(slot)->lowBytes = reader.readU4();
+
+                dynamic_cast<CONSTANT_Long*>(slot)->val = (((int64_t)dynamic_cast<CONSTANT_Long*>(slot)->highBytes) << 32)
+                                                           + dynamic_cast<CONSTANT_Long*>(slot)->lowBytes;
+                raw.constPoolInfo[i++] = dynamic_cast<CONSTANT_Long*>(slot);
+                // All 8-byte constants take up two slot in the constant_pool table
+                raw.constPoolInfo[i] = nullptr;
+                break;
+            }
+            case TAG_Double: {
+                slot = new CONSTANT_Double();
+                dynamic_cast<CONSTANT_Double*>(slot)->highBytes = reader.readU4();
+                dynamic_cast<CONSTANT_Double*>(slot)->lowBytes = reader.readU4();
+
+                int64_t val = (((int64_t)dynamic_cast<CONSTANT_Double*>(slot)->highBytes) << 32)
+                              + dynamic_cast<CONSTANT_Double*>(slot)->lowBytes;
+                dynamic_cast<CONSTANT_Double*>(slot)->val = *(double*)&val;
+                raw.constPoolInfo[i++] = dynamic_cast<CONSTANT_Double*>(slot);
+                // All 8-byte constants take up two slot in the constant_pool table
+                raw.constPoolInfo[i] = nullptr;
+                break;
+            }
+            case TAG_NameAndType: {
+                slot = new CONSTANT_NameAndType();
+                dynamic_cast<CONSTANT_NameAndType*>(slot)->nameIndex = reader.readU2();
+                dynamic_cast<CONSTANT_NameAndType*>(slot)->descreptorIndex = reader.readU2();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_NameAndType*>(slot);
+                break;
+            }
+            case TAG_Utf8: {
+                slot = new CONSTANT_Utf8();
+                u2 len = reader.readU2();
+                dynamic_cast<CONSTANT_Utf8*>(slot)->length = len;
+                dynamic_cast<CONSTANT_Utf8*>(slot)->bytes = static_cast<u1[]>(new uint8_t[len + 1]);
+                //The utf8 string is not end with '\0' since we do not need to reserve extra 1 byte
+                for (int k = 0; k < len; k++) {
+                    dynamic_cast<CONSTANT_Utf8*>(slot)->bytes[k] = reader.readU1();
+                }
+                dynamic_cast<CONSTANT_Utf8*>(slot)->bytes[len] = '\0'; //End with '\0' for simplicity
+
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_Utf8*>(slot);
+                // Todo: support unicode string ; here we just add null-char at the end of char array
+                break;
+            }
+            case TAG_MethodHandle: {
+                slot = new CONSTANT_MethodHandle();
+                dynamic_cast<CONSTANT_MethodHandle*>(slot)->referenceKind = reader.readU1();
+                dynamic_cast<CONSTANT_MethodHandle*>(slot)->referenceIndex = reader.readU1();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_MethodHandle*>(slot);
+                break;
+            }
+            case TAG_MethodType: {
+                slot = new CONSTANT_MethodType();
+                dynamic_cast<CONSTANT_MethodType *>(slot)->descriptorIndex = reader.readU2();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_MethodType *>(slot);
+                break;
+            }
+            case TAG_InvokeDynamic: {
+                slot = new CONSTANT_InvokeDynamic();
+                dynamic_cast<CONSTANT_InvokeDynamic *>(slot)->bootstrapMethodAttrIndex = reader.readU2();
+                dynamic_cast<CONSTANT_InvokeDynamic *>(slot)->nameAndTypeIndex = reader.readU2();
+                raw.constPoolInfo[i] = dynamic_cast<CONSTANT_InvokeDynamic *>(slot);
+                break;
+            }
+            default:
+                std::cerr << "undefined constant pool type\n";
+                return false;
+        }
+    }
+    return true;
 }
 
 
