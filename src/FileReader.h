@@ -28,7 +28,7 @@ public:
         return true;
     }
 
-    bool havNoExtraBytes() {
+    bool hasNoExtraBytes() {
         return fin.peek() == EOF;
     }
 
