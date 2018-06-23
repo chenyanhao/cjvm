@@ -48,8 +48,8 @@ MethodInfo* JavaClass::getMethod(const char *methodName, const char *methodDescr
     return nullptr;
 }
 
+// 魔数、版本号、常量池、访问限制、this/super/interface、字段、方法、属性表
 void JavaClass::parseClassFile() {
-    int ff = 0;
     // 魔数
     raw.magic = reader.readU4();
     if (raw.magic != JAVA_CLASS_FILE_MAGIC_NUMBER) {

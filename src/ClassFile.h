@@ -54,7 +54,7 @@ enum VariableInfoTag {
 /****************************************************************************
  * ConstantPool definitions
  ****************************************************************************/
-
+// ====== 常量池 ======
 class ConstantPoolInfo {
 public:
     virtual ~ConstantPoolInfo() = default;
@@ -85,30 +85,20 @@ public: \
     type3 field3; \
 };
 
+
+// 下面这些和 ConstantTag 中的枚举对应
 DEF_CONSTANT_WITH_2_FIELDS(Class, u2, nameIndex);
-
 DEF_CONSTANT_WITH_3_FIELDS(FieldRef, u2, classIndex, u2, nameAndTypeIndex);
-
 DEF_CONSTANT_WITH_3_FIELDS(MethodRef, u2, classIndex, u2, nameAndTypeIndex);
-
 DEF_CONSTANT_WITH_3_FIELDS(InterfaceMethodRef, u2, classIndex, u2, nameAndTypeIndex);
-
 DEF_CONSTANT_WITH_2_FIELDS(String, u2, stringIndex);
-
 DEF_CONSTANT_WITH_3_FIELDS(Integer, u4, bytes, int32_t, val);
-
 DEF_CONSTANT_WITH_3_FIELDS(Float, u4, bytes, float, val);
-
 DEF_CONSTANT_WITH_4_FIELDS(Long, u4, highBytes, u4, lowBytes, int64_t, val);
-
 DEF_CONSTANT_WITH_4_FIELDS(Double, u4, highBytes, u4, lowBytes, double, val);
-
 DEF_CONSTANT_WITH_3_FIELDS(NameAndType, u2, nameIndex, u2, descreptorIndex);
-
 DEF_CONSTANT_WITH_3_FIELDS(MethodHandle, u1, referenceKind, u2, referenceIndex);
-
 DEF_CONSTANT_WITH_2_FIELDS(MethodType, u2, descriptorIndex);
-
 DEF_CONSTANT_WITH_3_FIELDS(InvokeDynamic, u2, bootstrapMethodAttrIndex, u2, nameAndTypeIndex);
 
 /**
@@ -132,7 +122,7 @@ public:
 /****************************************************************************
  * Attributes definitions
  ****************************************************************************/
-
+// ====== 属性表。class 文件最复杂、最具扩展的表 ======
 class AttributeInfo {
 public:
     u2 attributeNameIndex;
@@ -309,6 +299,7 @@ public:
     }
 };
 
+// 异常表
 DEF_ATTR_START(Exception) {
 public:
     u2 numberOfExceptions;
@@ -319,6 +310,7 @@ public:
     }
 };
 
+// 内部类
 DEF_ATTR_START(InnerClasses) {
 public:
     u2 numberOfClasses;
@@ -669,6 +661,7 @@ public:
 /****************************************************************************
  * FieldInfo definition
  ****************************************************************************/
+// ====== 字段 ======
 class FieldInfo {
 public:
     u2 accessFlags;
@@ -691,6 +684,7 @@ public:
 /****************************************************************************
  * MethodInfo definition
  ****************************************************************************/
+// ====== 方法 ======
 class MethodInfo {
 public:
     u2 accessFlags;
@@ -714,20 +708,35 @@ public:
  ****************************************************************************/
 class ClassFile {
 public:
+    // 魔数
     u4 magic;
+
+    // 版本
     u2 minorVersion;
     u2 majorVersion;
+
+    // 常量池
     u2 constPoolCount;
     ConstantPoolInfo **constPoolInfo;
+
+    // 访问限制
     u2 accessFlags;
+
+    // this/super/interfaces
     u2 thisClass;
     u2 superClass;
     u2 interfacesCount;
     u2 *interfaces;
+
+    // 字段
     u2 fieldsCount;
     FieldInfo *fields;
+
+    // 方法
     u2 methodsCount;
     MethodInfo *methods;
+
+    // 属性表
     u2 attributesCount;
     AttributeInfo **attributes;
 

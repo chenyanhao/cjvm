@@ -21,6 +21,13 @@
 #define JAVA_CLASS_FILE_MAGIC_NUMBER 0XCAFEBABE
 
 class JavaClass {
+    friend struct Inspector;
+    friend struct YVM;
+    friend class JavaHeap;
+    friend class MethodArea;
+    friend class CodeExecution;
+    friend class ConcurrentGC;
+
 public:
     explicit JavaClass(const char* classFilePath);
     ~JavaClass();
