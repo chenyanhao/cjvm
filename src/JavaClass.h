@@ -63,7 +63,7 @@ private:
     bool parseInterface(u2 interfaceCount);
     bool parseField(u2 fieldCount);
     bool parseMethod(u2 methodCount);
-    bool parseAttribute(AttributeInfo** (&attrs), u2 attributeCount);
+    bool parseAttribute(AttributeInfo** attrs, u2 attributeCount);
 
 private:
     VerificationTypeInfo* determineVerificationType(u1 tag);

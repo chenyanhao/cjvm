@@ -148,6 +148,7 @@ public:
 
     u2 exceptionTableLength;
     class _ExceptionTable {
+    public:
         u2 startPC;
         u2 endPC;
         u2 handlerPC;

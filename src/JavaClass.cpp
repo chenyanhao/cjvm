@@ -148,8 +148,10 @@ bool JavaClass::parseConstantPool(u2 cpCount) {
 
     // JVM8 规范说明：常量池中常量的索引从 1 开始，到 constant_pool_count - 1
     for (int i = 1; i < cpCount - 1; ++i) {
+        // 常量池的常量都是一个 tag 和一个表数据结构组成
         u1 tag = reader.readU1();
         ConstantPoolInfo *slot;
+
         switch (tag) {
             case TAG_Class:
                 slot = new CONSTANT_Class();
@@ -269,6 +271,154 @@ bool JavaClass::parseConstantPool(u2 cpCount) {
     }
     return true;
 }
+
+
+bool JavaClass::parseInterface(u2 interfaceCount) {
+    raw.interfaces = new uint16_t[interfaceCount];
+    FOR_EACH(i, interfaceCount) {
+        raw.interfaces[i] = reader.readU2();
+        // Each index must be a valid constant pool subscript, which pointed to a CONSTANT_Class structure
+        assert(typeid(*raw.constPoolInfo[raw.interfaces[i]]) == typeid(CONSTANT_Class));
+    }
+    return true;
+}
+
+bool JavaClass::parseField(u2 fieldCount) {
+    raw.fields = new FieldInfo[fieldCount];
+    if (!raw.fields) {
+        std::cerr << __func__ << ":Can not allocate memory to load class file\n";
+        return false;
+    }
+
+    FOR_EACH(i, fieldCount) {
+        raw.fields[i].accessFlags = reader.readU2();
+        raw.fields[i].nameIndex = reader.readU2();
+        raw.fields[i].descriptorIndex = reader.readU2();
+        raw.fields[i].attributeCount = reader.readU2();
+        parseAttribute(raw.fields[i].attributes, raw.fields[i].attributeCount);
+    }
+
+    return true;
+}
+
+bool JavaClass::parseMethod(u2 methodCount) {
+    raw.methods = new MethodInfo[methodCount];
+    if (!raw.methods) {
+        std::cerr << __func__ << ":Can not allocate memory to load class file\n";
+        return false;
+    }
+
+    FOR_EACH(i, methodCount) {
+        raw.methods[i].accessFlags = reader.readU2();
+        raw.methods[i].nameIndex = reader.readU2();
+        raw.methods[i].descriptorIndex = reader.readU2();
+        raw.methods[i].attributeCount = reader.readU2();
+        parseAttribute(raw.methods[i].attributes, raw.methods[i].attributeCount);
+    }
+
+    return true;
+}
+
+
+bool JavaClass::parseAttribute(AttributeInfo **attrs, u2 attributeCount) {
+    attrs = new AttributeInfo*[attributeCount];
+    if (!attrs) {
+        std::cerr << __func__ << ":Can not allocate memory to load class file\n";
+        return false;
+    }
+
+    FOR_EACH(i, attributeCount) {
+        const u2 attrStrIndex = reader.readU2();
+        if (typeid(*raw.constPoolInfo[attrStrIndex]) == typeid(CONSTANT_Utf8)) {
+            return false;
+        }
+
+        char *attrName = (char*) dynamic_cast<CONSTANT_Utf8*>(raw.constPoolInfo[attrStrIndex])->bytes;
+        IS_ATTR_ConstantValue(attrName) {
+            auto *attr = new ATTR_ConstantValue;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->constantValueIndex = reader.readU2();
+
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_Code(attrName) {
+            auto *attr = new ATTR_Code;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->maxStack = reader.readU2();
+            attr->maxLocals = reader.readU2();
+            attr->codeLength = reader.readU4();
+
+            attr->code = new uint8_t[attr->codeLength];
+            FOR_EACH(k, attr->codeLength) {
+                attr->code[k] = reader.readU1();
+            }
+
+            attr->exceptionTableLength = reader.readU2();
+            attr->exceptionTable = new ATTR_Code::_ExceptionTable[attr->exceptionTableLength];
+            FOR_EACH(k, attr->exceptionTableLength) {
+                attr->exceptionTable[k].startPC = reader.readU2();
+                attr->exceptionTable[k].endPC = reader.readU2();
+                attr->exceptionTable[k].handlerPC = reader.readU2();
+                attr->exceptionTable[k].catchType = reader.readU2();
+            }
+
+            attr->attributeCount = reader.readU2();
+            parseAttribute(attr->attributes, attr->attributeCount);
+
+            attrs[i] = attr;
+            continue;
+        }
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
