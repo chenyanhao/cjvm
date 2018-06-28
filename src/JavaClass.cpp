@@ -48,7 +48,31 @@ MethodInfo* JavaClass::getMethod(const char *methodName, const char *methodDescr
     return nullptr;
 }
 
-// 魔数、版本号、常量池、访问限制、this/super/interface、字段、方法、属性表
+/**
+ * 魔数、版本号、常量池、访问限制、this/super/interface、字段、方法、属性表
+ *
+ * @code
+ * ClassFile {
+ *      u4              magic
+ *      u2              minor_version
+ *      u2              major_version
+ *      u2              constant_pool_count
+ *      cp_info         constant_pool[constant_pool_count - 1]
+ *      u2              access_flags
+ *      u2              this_class
+ *      u2              super_class
+ *      u2              interfaces_count
+ *      u2[]            interfaces[interfaces_count]
+ *      u2              fields_count
+ *      field_info      fields[fields_count]
+ *      u2              methods_count
+ *      method_info     methods[methods_count]
+ *      u2              attributes_count
+ *      attribute_info  attributes[attributes_count]
+ * }
+ * @endcode
+ *
+ */
 void JavaClass::parseClassFile() {
     // 魔数
     raw.magic = reader.readU4();
@@ -283,6 +307,20 @@ bool JavaClass::parseInterface(u2 interfaceCount) {
     return true;
 }
 
+/**
+ * @code
+ * field_info {
+ *      u2                  access_flag
+ *      u2                  name_index
+ *      u2                  descriptor_index
+ *      u2                  attributes_count
+ *      attribute_info      attributes[attributes_count]
+ * }
+ * @endcode
+ *
+ * @param fieldCount
+ * @return
+ */
 bool JavaClass::parseField(u2 fieldCount) {
     raw.fields = new FieldInfo[fieldCount];
     if (!raw.fields) {
@@ -301,6 +339,19 @@ bool JavaClass::parseField(u2 fieldCount) {
     return true;
 }
 
+/**
+ * @code
+ * method_info {
+ *      u2                  access_flag
+ *      u2                  name_index
+ *      u2                  descriptor_index
+ *      u2                  attributes_count
+ *      attribute_info      attributes[attributes_count]
+ * }
+ * @endcode
+ * @param methodCount
+ * @return
+ */
 bool JavaClass::parseMethod(u2 methodCount) {
     raw.methods = new MethodInfo[methodCount];
     if (!raw.methods) {
@@ -310,6 +361,7 @@ bool JavaClass::parseMethod(u2 methodCount) {
 
     FOR_EACH(i, methodCount) {
         raw.methods[i].accessFlags = reader.readU2();
+
         raw.methods[i].nameIndex = reader.readU2();
         raw.methods[i].descriptorIndex = reader.readU2();
         raw.methods[i].attributeCount = reader.readU2();
@@ -320,6 +372,19 @@ bool JavaClass::parseMethod(u2 methodCount) {
 }
 
 
+/**
+ * @code
+ * attribute_info {
+ *      u2      attribute_name_index
+ *      u4      attribute_name
+ *      u1[]    info[attribute_length]
+ * }
+ * @endcode
+ *
+ * @param attrs
+ * @param attributeCount
+ * @return
+ */
 bool JavaClass::parseAttribute(AttributeInfo **attrs, u2 attributeCount) {
     attrs = new AttributeInfo*[attributeCount];
     if (!attrs) {
@@ -370,6 +435,25 @@ bool JavaClass::parseAttribute(AttributeInfo **attrs, u2 attributeCount) {
 
             attrs[i] = attr;
             continue;
+        }
+        IS_ATTR_StackMapTable(attrName) {
+            auto *attr = new ATTR_StackMapTable;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numberOfEntries = reader.readU2();
+            attr->entries = new StackMapFrame*[attr->numberOfEntries];
+            FOR_EACH(k, attr->numberOfEntries) {
+                u1 frameType = reader.readU1();
+                if (IS_STACKFRAME_same_frame(frameType)) {
+                    auto *frame = new Frame_Same();
+                    attr->entries[k] = frame;
+                } else if (IS_STACKFRAME_same_locals_1_stack_item_frame(frameType)) {
+                    auto *frame = new Frame_Same_locals_1_stack_item;
+                    frame->stack = new VerificationTypeInfo*[1];
+                    frame->stack[0] = determineVerificationType(reader.readU1());
+                    attr->entries[k] = frame;
+                }
+            }
         }
     }
 }
