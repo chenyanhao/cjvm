@@ -316,6 +316,7 @@ DEF_ATTR_START(InnerClasses) {
 public:
     u2 numberOfClasses;
     class _Classes {
+    public:
         u2 innerClassInfoIndex;
         u2 outerClassInfoIndex;
         u2 innerNameIndex;
@@ -353,6 +354,7 @@ DEF_ATTR_START(LineNumberTable) {
 public:
     u2 lineNumberTableLength;
     class _LineNumberTable {
+    public:
         u2 startPC;
         u2 lineNumber;
     } *lineNumberTable;
@@ -366,6 +368,7 @@ DEF_ATTR_START(LocalVariableTable) {
 public:
     u2 localVariableTableLength;
     class _LocalVariableTable {
+    public:
         u2 startPC;
         u2 length;
         u2 nameIndex;
@@ -382,6 +385,7 @@ DEF_ATTR_START(LocalVariableTypeTable) {
 public:
     u2 localVariableTypeTableLength;
     class _LocalVariableTypeTable {
+    public:
         u2 startPC;
         u2 length;
         u2 nameIndex;
@@ -410,6 +414,7 @@ public:
 
     u2 numElementValuePairs;
     class _ElementValuePairs {
+    public:
         u2 elementNameIndex;
         ElementValue* value;
         ~_ElementValuePairs() {
@@ -482,6 +487,7 @@ public:
     u1 numParameters;
 
     class _ParameterAnnotations {
+    public:
         u2 numAnnotations;
         Annotation* annotations;
 
@@ -500,6 +506,7 @@ public:
     u1 numParameters;
 
     class _ParameterAnnotations {
+    public:
         u2 numAnnotations;
         Annotation *annotations;
 
@@ -545,6 +552,7 @@ public:
     u2 tableLength;
 
     class _Table {
+    public:
         u2 startPc;
         u2 length;
         u2 index;
@@ -565,9 +573,11 @@ public:
     TargetInfo *targetInfo;
 
     class TypePath {
+    public:
         u1 pathLength;
 
         class _Path {
+        public:
             u1 typePathKind;
             u1 typeArgumentIndex;
         } *path;
@@ -581,6 +591,7 @@ public:
     u2 numElementValuePairs;
 
     class _ElementValuePairs {
+    public:
         u2 elementNameIndex;
         ElementValue *value;
 
@@ -629,6 +640,7 @@ public:
     u2 numBootstrapMethods;
 
     class _BootstrapMethod {
+    public:
         u2 bootstrapMethodRef;
         u2 numBootstrapArgument;
         u2 *bootstrapArguments;
@@ -648,6 +660,7 @@ public:
     u1 parameterCount;
 
     class _Parameters {
+    public:
         u2 nameIndex;
         u2 accessFlags;
     } *parameters;

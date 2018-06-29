@@ -67,7 +67,7 @@ private:
 
 private:
     VerificationTypeInfo* determineVerificationType(u1 tag);
-    TargetInfo* derterminTargetType(u1 tag);
+    TargetInfo* determineTargetType(u1 tag);
     ElementValue* readToElementValueStructure();
     Annotation readToAnnotationStructure();
 
@@ -76,6 +76,7 @@ private:
     FileReader reader;
     std::map<size_t, JType*> sfield;
 };
+
 
 
 #endif //CJVM_JAVACLASS_H

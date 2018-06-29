@@ -452,19 +452,497 @@ bool JavaClass::parseAttribute(AttributeInfo **attrs, u2 attributeCount) {
                     frame->stack = new VerificationTypeInfo*[1];
                     frame->stack[0] = determineVerificationType(reader.readU1());
                     attr->entries[k] = frame;
+                } else if (IS_STACKFRAME_same_locals_1_stack_item_frame_extended(frameType)) {
+                    auto *frame = new Frame_Same_locals_1_stack_item_extended;
+                    frame->offsetDelta = reader.readU2();
+                    frame->stack = new VerificationTypeInfo*[1];
+                    frame->stack[0] = determineVerificationType(reader.readU1());
+                    attr->entries[k] = frame;
+                } else if (IS_STACKFRAME_chop_frame(frameType)) {
+                    auto* frame = new Frame_Chop;
+                    frame->offsetDelta = reader.readU2();
+                    attr->entries[k] = frame;
+                } else if (IS_STACKFRAME_same_frame_extended(frameType)) {
+                    auto* frame = new Frame_Same_frame_extended;
+                    frame->offsetDelta = reader.readU2();
+                    attr->entries[k] = frame;
+                } else if (IS_STACKFRAME_append_frame(frameType)) {
+                    auto* frame = new Frame_Append;
+                    frame->frameType = frameType;
+                    // It's important to store current frame type since ~Frame_Append need it to release memory
+                    frame->offsetDelta = reader.readU2();
+                    frame->stack = new VerificationTypeInfo*[frameType - 251];
+                    FOR_EACH(p, frameType - 251) {
+                        frame->stack[p] = determineVerificationType(reader.readU1());
+                    }
+                    attr->entries[k] = frame;
+                } else if (IS_STACKFRAME_full_frame(frameType)) {
+                    auto* frame = new Frame_Full;
+                    frame->offsetDelta = reader.readU2();
+                    frame->numberOfLocals = reader.readU2();
+                    frame->locals = new VerificationTypeInfo*[frame->numberOfLocals];
+                    FOR_EACH(p, frame->numberOfLocals) {
+                        frame->locals[p] = determineVerificationType(reader.readU1());
+                    }
+                    frame->numberOfStackItems = reader.readU2();
+                    frame->stack = new VerificationTypeInfo*[frame->numberOfStackItems];
+                    FOR_EACH(p, frame->numberOfStackItems) {
+                        frame->stack[p] = determineVerificationType(reader.readU1());
+                    }
+                    attr->entries[k] = frame;
+                } else {
+                    // TODO
+                    // shouldn't reach here
                 }
             }
+            attrs[i] = attr;
+            continue;
         }
+        IS_ATTR_Exceptions(attrName) {
+            auto *attr = new ATTR_Exception;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numberOfExceptions = reader.readU2();
+            attr->exceptionIndexTable = new uint16_t[attr->numberOfExceptions];
+            FOR_EACH(k, attr->numberOfExceptions) {
+                attr->exceptionIndexTable[k] = reader.readU2();
+            }
+            attrs[i] = attr;
+            continue;
+        }
+
+        IS_ATTR_InnerClasses(attrName) {
+            auto *attr = new ATTR_InnerClasses;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numberOfClasses = reader.readU2();
+            attr->classes = new ATTR_InnerClasses::_Classes[attr->numberOfClasses];
+            FOR_EACH(k, attr->numberOfClasses) {
+                attr->classes[k].innerClassInfoIndex = reader.readU2();
+                attr->classes[k].outerClassInfoIndex = reader.readU2();
+                attr->classes[k].innerNameIndex = reader.readU2();
+                attr->classes[k].innerClassAccessFlags = reader.readU2();
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_EnclosingMethod(attrName) {
+            auto *attr = new ATTR_EnclosingMethod;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->classIndex = reader.readU2();
+            attr->methodIndex = reader.readU2();
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_Synthetic(attrName) {
+            auto *attr = new ATTR_Synthetic;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_Signature(attrName) {
+            auto *attr = new ATTR_Signature;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->signatureIndex = reader.readU2();
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_SourceFile(attrName) {
+            auto* attr = new ATTR_SourceFile;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->sourceFileIndex = reader.readU2();
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_SourceDebugExtension(attrName) {
+            auto* attr = new ATTR_SourceDebugExtension;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->debugExtension = new uint8_t[attr->attributeLength];
+            FOR_EACH(k, attr->attributeLength) {
+                attr->debugExtension[k] = reader.readU1();
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_LineNumberTable(attrName) {
+            auto* attr = new ATTR_LineNumberTable;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->lineNumberTableLength = reader.readU2();
+            attr->lineNumberTable = new ATTR_LineNumberTable::_LineNumberTable[attr->lineNumberTableLength];
+            FOR_EACH(k, attr->lineNumberTableLength) {
+                attr->lineNumberTable[k].startPC = reader.readU2();
+                attr->lineNumberTable[k].lineNumber = reader.readU2();
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_LocalVariableTable(attrName) {
+            auto* attr = new ATTR_LocalVariableTable;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->localVariableTableLength = reader.readU2();
+            attr->localVariableTable = new ATTR_LocalVariableTable::_LocalVariableTable[attr->localVariableTableLength];
+            FOR_EACH(k, attr->localVariableTableLength) {
+                attr->localVariableTable[k].startPC = reader.readU2();
+                attr->localVariableTable[k].length = reader.readU2();
+                attr->localVariableTable[k].nameIndex = reader.readU2();
+                attr->localVariableTable[k].descriptorIndex = reader.readU2();
+                attr->localVariableTable[k].index = reader.readU2();
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_LocalVariableTypeTable(attrName) {
+            auto* attr = new ATTR_LocalVariableTypeTable;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->localVariableTypeTableLength = reader.readU2();
+            attr->localVariableTypeTable = new ATTR_LocalVariableTypeTable::_LocalVariableTypeTable[attr->
+                    localVariableTypeTableLength];
+            FOR_EACH(k, attr->localVariableTypeTableLength) {
+                attr->localVariableTypeTable[k].startPC = reader.readU2();
+                attr->localVariableTypeTable[k].length = reader.readU2();
+                attr->localVariableTypeTable[k].nameIndex = reader.readU2();
+                attr->localVariableTypeTable[k].signatureIndex = reader.readU2();
+                attr->localVariableTypeTable[k].index = reader.readU2();
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_Deprecated(attrName) {
+            auto* attr = new ATTR_Deprecated;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_RuntimeVisibleAnnotations(attrName) {
+            auto* attr = new ATTR_RuntimeVisibleAnnotations;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numAnnotations = reader.readU2();
+            attr->annotations = new Annotation[attr->numAnnotations];
+            FOR_EACH(k, attr->numAnnotations) {
+                attr->annotations[k] = readToAnnotationStructure();
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_RuntimeInvisibleAnnotations(attrName) {
+            auto* attr = new ATTR_RuntimeInvisibleAnnotations;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numAnnotations = reader.readU2();
+            attr->annotations = new Annotation[attr->numAnnotations];
+            FOR_EACH(k, attr->numAnnotations) {
+                attr->annotations[k] = readToAnnotationStructure();
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_RuntimeVisibleParameterAnnotations(attrName) {
+            auto* attr = new ATTR_RuntimeVisibleParameterAnnotations;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numParameters = reader.readU1();
+            attr->parameterAnnotations = new ATTR_RuntimeVisibleParameterAnnotations::_ParameterAnnotations[attr->
+                    numParameters];
+            FOR_EACH(k, attr->numParameters) {
+                attr->parameterAnnotations[k].numAnnotations = reader.readU2();
+                attr->parameterAnnotations[k].annotations = new Annotation[attr->parameterAnnotations[k].numAnnotations
+                ];
+                FOR_EACH(p, attr->parameterAnnotations[k].numAnnotations) {
+                    attr->parameterAnnotations[k].annotations[p] = readToAnnotationStructure();
+                }
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_RuntimeInvisibleParameterAnnotations(attrName) {
+            auto* attr = new ATTR_RuntimeInvisibleParameterAnnotations;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numParameters = reader.readU1();
+            attr->parameterAnnotations = new ATTR_RuntimeInvisibleParameterAnnotations::_ParameterAnnotations[attr->
+                    numParameters];
+            FOR_EACH(k, attr->numParameters) {
+                attr->parameterAnnotations[k].numAnnotations = reader.readU2();
+                attr->parameterAnnotations[k].annotations = new Annotation[attr->parameterAnnotations[k].numAnnotations
+                ];
+                FOR_EACH(p, attr->parameterAnnotations[k].numAnnotations) {
+                    attr->parameterAnnotations[k].annotations[p] = readToAnnotationStructure();
+                }
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_RuntimeVisibleTypeAnnotations(attrName) {
+            auto* attr = new ATTR_RuntimeVisibleTypeAnnotations;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numAnnotations = reader.readU2();
+            attr->annotations = new TypeAnnotation[attr->numAnnotations];
+            FOR_EACH(k, attr->numAnnotations) {
+                attr->annotations[k].targetType = reader.readU1();
+                attr->annotations[k].targetInfo = determineTargetType(attr->annotations[k].targetType);
+
+                // read to target_path
+                attr->annotations[k].targetPath.pathLength = reader.readU1();
+                attr->annotations[k].targetPath.path = new TypeAnnotation::TypePath::_Path[attr->annotations[k]
+                        .targetPath.pathLength];
+                FOR_EACH(p, attr->annotations[k].targetPath.pathLength) {
+                    attr->annotations[k].targetPath.path[p].typePathKind = reader.readU1();
+                    attr->annotations[k].targetPath.path[p].typeArgumentIndex = reader.readU1();
+                }
+
+                attr->annotations[k].typeIndex = reader.readU2();
+                attr->annotations[k].numElementValuePairs = reader.readU2();
+                attr->annotations[k].elementValuePairs = new TypeAnnotation::_ElementValuePairs[attr->annotations[k].
+                        numElementValuePairs];
+                FOR_EACH(p, attr->annotations[k].numElementValuePairs) {
+                    attr->annotations[k].elementValuePairs[p].elementNameIndex = reader.readU2();
+                    attr->annotations[k].elementValuePairs[p].value = readToElementValueStructure();
+                }
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_RuntimeInvisibleTypeAnnotations(attrName) {
+            auto* attr = new ATTR_RuntimeInvisibleTypeAnnotations;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numAnnotations = reader.readU2();
+            attr->annotations = new TypeAnnotation[attr->numAnnotations];
+            FOR_EACH(k, attr->numAnnotations) {
+                attr->annotations[k].targetType = reader.readU1();
+                attr->annotations[k].targetInfo = determineTargetType(attr->annotations[k].targetType);
+
+                // read to target_path
+                attr->annotations[k].targetPath.pathLength = reader.readU1();
+                attr->annotations[k].targetPath.path = new TypeAnnotation::TypePath::_Path[attr->annotations[k]
+                        .targetPath.pathLength];
+                FOR_EACH(p, attr->annotations[k].targetPath.pathLength) {
+                    attr->annotations[k].targetPath.path[p].typePathKind = reader.readU1();
+                    attr->annotations[k].targetPath.path[p].typeArgumentIndex = reader.readU1();
+                }
+
+                attr->annotations[k].typeIndex = reader.readU2();
+                attr->annotations[k].numElementValuePairs = reader.readU2();
+                attr->annotations[k].elementValuePairs = new TypeAnnotation::_ElementValuePairs[attr->annotations[k].
+                        numElementValuePairs];
+                FOR_EACH(p, attr->annotations[k].numElementValuePairs) {
+                    attr->annotations[k].elementValuePairs[p].elementNameIndex = reader.readU2();
+                    attr->annotations[k].elementValuePairs[p].value = readToElementValueStructure();
+                }
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_AnnotationDefault(attrName) {
+            auto* attr = new ATTR_AnnotationDefault;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->defaultValue = readToElementValueStructure();
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_BootstrapMethods(attrName) {
+            auto* attr = new ATTR_BootstrapMethods;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->numBootstrapMethods = reader.readU2();
+            attr->bootstrapMethod = new ATTR_BootstrapMethods::_BootstrapMethod[attr->numBootstrapMethods];
+            FOR_EACH(k, attr->numBootstrapMethods) {
+                attr->bootstrapMethod[k].bootstrapMethodRef = reader.readU2();
+
+                attr->bootstrapMethod[k].numBootstrapArgument = reader.readU2();
+                attr->bootstrapMethod[k].bootstrapArguments = new uint16_t[attr->bootstrapMethod[k].numBootstrapArgument];
+                FOR_EACH(p, attr->bootstrapMethod[k].numBootstrapArgument) {
+                    attr->bootstrapMethod[k].bootstrapArguments[p] = reader.readU2();
+                }
+            }
+            attrs[i] = attr;
+            continue;
+        }
+        IS_ATTR_MethodParameters(attrName) {
+            auto* attr = new ATTR_MethodParameter;
+            attr->attributeNameIndex = attrStrIndex;
+            attr->attributeLength = reader.readU4();
+            attr->parameterCount = reader.readU1();
+            attr->parameters = new ATTR_MethodParameter::_Parameters[attr->parameterCount];
+            FOR_EACH(k, attr->parameterCount) {
+                attr->parameters[k].nameIndex = reader.readU2();
+                attr->parameters[k].accessFlags = reader.readU2();
+            }
+            attrs[i] = attr;
+        }
+
     }
 }
 
 
+VerificationTypeInfo* JavaClass::determineVerificationType(u1 tag) {
+    switch (tag) {
+        case ITEM_Top:
+            return new VariableInfo_Top();
+        case ITEM_Integer:
+            return new VariableInfo_Integer();
+        case ITEM_Float:
+            return new VariableInfo_Float;
+        case ITEM_Null: {
+            return new VariableInfo_Null;
+        }
+        case ITEM_UninitializedThis: {
+            return new VariableInfo_UninitializedThis;
+        }
+        case ITEM_Object: {
+            auto* x = new VariableInfo_Object;
+            x->cpoolIndex = reader.readU2();
+            return x;
+        }
+        case ITEM_Uninitialized: {
+            auto* x = new VariableInfo_Uninitialized;
+            x->offset = reader.readU2();
+            return x;
+        }
+        case ITEM_Long: {
+            return new VariableInfo_Long;
+        }
+        case ITEM_Double: {
+            return new VariableInfo_Double;
+        }
+        default:
+            std::cerr << __func__ << ":Incorrect tag of verification type\n";
+            return nullptr;
+    }
+}
 
 
+TargetInfo* JavaClass::determineTargetType(u1 tag) {
+    if (tag == 0x00 || tag == 0x01) {
+        auto* t = new Target_TypeParameter;
+        t->typeParameterIndex = reader.readU1();
+        return t;
+    }
+    if (tag == 0x10) {
+        auto* t = new Target_SuperType;
+        t->superTypeIndex = reader.readU2();
+        return t;
+    }
+    if (tag == 0x11 || tag == 0x12) {
+        auto* t = new Target_TypeParameterBound;
+        t->typeParameterIndex = reader.readU1();
+        t->boundIndex = reader.readU1();
+        return t;
+    }
+    if (tag == 0x13 || tag == 0x14 || tag == 0x15) {
+        return new Target_Empty;
+    }
+    if (tag == 0x16) {
+        auto* t = new Target_FormalParameter;
+        t->formalParameter = reader.readU1();
+        return t;
+    }
+    if (tag == 0x17) {
+        auto* t = new Target_Throws;
+        t->throwsTypeIndex = reader.readU2();
+        return t;
+    }
+    if (tag == 0x40 || tag == 0x41) {
+        auto* t = new Target_LocalVar;
+        t->tableLength = reader.readU2();
+        FOR_EACH(i, t->tableLength) {
+            t->table[i].startPc = reader.readU2();
+            t->table[i].length = reader.readU2();
+            t->table[i].index = reader.readU2();
+        }
+        return t;
+    }
+    if (tag == 0x42) {
+        auto* t = new Target_Catch;
+        t->exceptionTableIndex = reader.readU2();
+        return t;
+    }
+    if (tag >= 0x43 && tag <= 0x46) {
+        auto* t = new Target_Offset;
+        t->offset = reader.readU2();
+        return t;
+    }
+    if (tag >= 0x47 && tag <= 0x4B) {
+        auto* t = new Target_TypeArgument;
+        t->offset = reader.readU2();
+        t->typeArgumentIndex = reader.readU1();
+        return t;
+    }
+}
 
 
+Annotation JavaClass::readToAnnotationStructure() {
+    Annotation a{};
+    a.typeIndex = reader.readU2();
+    a.numElementValuePairs = reader.readU2();
+    FOR_EACH(p, a.numElementValuePairs) {
+        a.elementValuePairs[p].elementNameIndex = reader.readU2();
+        a.elementValuePairs[p].value = readToElementValueStructure();
+    }
+    return a;
+}
 
 
+ElementValue* JavaClass::readToElementValueStructure() {
+    char tag = reader.readU1();
+    switch (tag) {
+        case 'B':
+        case 'C':
+        case 'D':
+        case 'F':
+        case 'I':
+        case 'J':
+        case 'S':
+        case 'Z':
+        case 's': {
+            // const_value_index of union
+            auto* e = new ElementValue_ConstantValueIndex;
+            e->constValueIndex = reader.readU2();
+            return e;
+        }
+        case 'e': {
+            auto* e = new ElementValue_EnumConstValue;
+            e->typeNameIndex = reader.readU2();
+            e->constNameIndex = reader.readU2();
+            break;
+        }
+        case 'c': {
+            auto* e = new ElementValue_ClassInfoIndex;
+            e->classInfoIndex = reader.readU2();
+            return e;
+        }
+        case '@': {
+            auto* e = new ElementValue_Annotation;
+            e->annotationValue = readToAnnotationStructure();
+            return e;
+        }
+        case '[': {
+            auto* e = new ElementValue_ArrayValue;
+            e->numValues = reader.readU2();
+            e->values = new ElementValue *[e->numValues];
+            FOR_EACH(i, e->numValues) {
+                e->values[i] = readToElementValueStructure();
+            }
+            return e;
+        }
+        default:
+            std::cerr << __func__ << ":Incorrect element value type\n";
+            return nullptr;
+    }
+
+}
 
 
 
