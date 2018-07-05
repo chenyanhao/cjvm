@@ -87,21 +87,62 @@ public: \
 
 
 // 下面这些和 ConstantTag 中的枚举对应
-DEF_CONSTANT_WITH_2_FIELDS(Class, u2, nameIndex);
-DEF_CONSTANT_WITH_3_FIELDS(FieldRef, u2, classIndex, u2, nameAndTypeIndex);
-DEF_CONSTANT_WITH_3_FIELDS(MethodRef, u2, classIndex, u2, nameAndTypeIndex);
-DEF_CONSTANT_WITH_3_FIELDS(InterfaceMethodRef, u2, classIndex, u2, nameAndTypeIndex);
 DEF_CONSTANT_WITH_2_FIELDS(String, u2, stringIndex);
 DEF_CONSTANT_WITH_3_FIELDS(Integer, u4, bytes, int32_t, val);
 DEF_CONSTANT_WITH_3_FIELDS(Float, u4, bytes, float, val);
 DEF_CONSTANT_WITH_4_FIELDS(Long, u4, highBytes, u4, lowBytes, int64_t, val);
 DEF_CONSTANT_WITH_4_FIELDS(Double, u4, highBytes, u4, lowBytes, double, val);
-DEF_CONSTANT_WITH_3_FIELDS(NameAndType, u2, nameIndex, u2, descreptorIndex);
+
+/**
+ * nameIndex:   指向全限定名常量项的索引
+ */
+DEF_CONSTANT_WITH_2_FIELDS(Class, u2, nameIndex);
+
+/**
+ * classIndex:          指向声明字段的类或者接口描述符 CONSTANT_Class_info 的索引项
+ * nameAndTypeIndex:    指向该字段描述符 CONSTANT_NameAndTypeinfo 的索引项
+ */
+DEF_CONSTANT_WITH_3_FIELDS(FieldRef, u2, classIndex, u2, nameAndTypeIndex);
+
+/**
+ * classIndex:          指向声明方法的类描述符 CONSTANT_Class_info 的索引项
+ * nameAndTypeIndex:    指向该方法描述符 CONSTANT_NameAndTypeinfo 的索引项
+ */
+DEF_CONSTANT_WITH_3_FIELDS(MethodRef, u2, classIndex, u2, nameAndTypeIndex);
+
+/**
+ * classIndex:          指向声明方法的接口描述符 CONSTANT_Class_info 的索引项
+ * nameAndTypeIndex:    指向该方法描述符 CONSTANT_NameAndTypeinfo 的索引项
+ */
+DEF_CONSTANT_WITH_3_FIELDS(InterfaceMethodRef, u2, classIndex, u2, nameAndTypeIndex);
+
+/**
+ * nameIndex:       指向该字段或方法名称常量项的索引
+ * descriptorIndex: 指向该字段或方法描述符常量项的索引
+ */
+DEF_CONSTANT_WITH_3_FIELDS(NameAndType, u2, nameIndex, u2, descriptorIndex);
+
+/**
+ * referenceKind:   值必须在 1-9 之间，它决定了方法句柄的类型。方法举兵类型的值表示方法句柄的字节码行为
+ * referenceIndex:  值必须是对常量池的有效索引
+ */
 DEF_CONSTANT_WITH_3_FIELDS(MethodHandle, u1, referenceKind, u2, referenceIndex);
+
+/**
+ * descriptorIndex: 对常量池的索引，常量池在该索引处的项必须是 CONSTANT_Utf8_info 结构，表示该方法的描述符
+ */
 DEF_CONSTANT_WITH_2_FIELDS(MethodType, u2, descriptorIndex);
+
+/**
+ * bootstrapMethodAttrIndex:    当前 Class 文件中引导方法表的 bootstrap_methods[] 数组的索引
+ * nameAndTypeIndex:            对常量池的索引，常量池在该索引处的项必须是 CONSTANT_NameAndTypeinfo 结构，表示方法名和方法的描述符
+ */
 DEF_CONSTANT_WITH_3_FIELDS(InvokeDynamic, u2, bootstrapMethodAttrIndex, u2, nameAndTypeIndex);
 
 /**
+ * length:  Utf-8 编码的字符串占用的字节数
+ * bytes:   长度为 length 的 Utf-8 字符串
+ *
  * 其属性有动态数组，所以需要 override 其析构函数，
  * 所以这里没有用宏来定义。
  */

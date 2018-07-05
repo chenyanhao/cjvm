@@ -23,9 +23,11 @@ class MethodArea {
     friend class ConcurrentGC;
 public:
     MethodArea(const std::vector<std::string> &libPaths);
-    ~MethodArea();
+    virtual ~MethodArea();
+
     JavaClass* findJavaClass(const char *javaClassName);
     bool loadJavaClass(const char *javaClassName);
+    bool removeJavaClass(const char *javaClassName);
     void linkJavaClass(const char *javaClassName);
     void initJavaClass(CodeExecution &execution, const char *javaClassName);
 
