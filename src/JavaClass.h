@@ -53,9 +53,7 @@ public:
     }
 
     void parseClassFile();
-
     std::vector<u2> getInterfacesIndex() const;
-
     MethodInfo* getMethod(const char *methodName, const char *methodDescriptor) const;
 
 private:

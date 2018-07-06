@@ -174,11 +174,22 @@ public:
 #define DEF_ATTR_START(name) \
 class ATTR_##name : public AttributeInfo
 
+/**
+ * final 关键字定义的常量值，该属性的作用是通知虚拟机自动为静态变量赋值
+ */
 DEF_ATTR_START(ConstantValue) {
 public:
     u2 constantValueIndex;
 };
 
+/**
+ * Java 代码编译成的字节码指令
+ * maxStack:    操作数栈(Operand Stacks)的最大深度
+ * maxLocals:   局部变量表存储空间
+ * codeLength:  编译后的字节码指令的长度
+ * code:        编译后的字节码指令
+ *
+ */
 DEF_ATTR_START(Code) {
 public:
     u2 maxStack;
@@ -328,6 +339,15 @@ public:
     }
 };
 
+/**
+ * Code 属性中使用，JDK1.6 中新增的属性
+ *
+ * 供新的类型检查验证器检查和处理目标方法的局部变量和操作数栈所需的类型是否匹配，
+ * 目的在于代替一千比较消耗性能的基于数据流分析的类型推导验证器。
+ *
+ * 其中包含零至多个栈映射帧(StackMapFrame)，每个 StackMapFrame 都显式或隐式地代表了一个字节码偏移量，
+ * 用于表示执行到该字节码时局部变量表和操作数栈的验证类型。
+ */
 DEF_ATTR_START(StackMapTable) {
 public:
     u2 numberOfEntries;
@@ -342,6 +362,12 @@ public:
 };
 
 // 异常表
+/**
+ * Exception 属性不要与 Code 属性中用到的异常表混淆
+ *
+ * Exception 属性的作用是列举方法中可能抛出的受检异常，
+ * 每一种受检异常用一个 exceptionIndexTable 表示，它是一个指向常量池中 CONSTANT_Class_info 型常量的指针
+ */
 DEF_ATTR_START(Exception) {
 public:
     u2 numberOfExceptions;
@@ -353,6 +379,16 @@ public:
 };
 
 // 内部类
+/**
+ * 记录内部类与宿主类之间的关联
+ *
+ * numberOfClasses:         记录多少个内部类
+ *
+ * innerClassInfoIndex:     指向常量池中 CONSTANT_Class_info 型常量的指针，代表内部类的符号引用
+ * outerClassInfoIndex:     指向常量池中 CONSTANT_Class_info 型常量的指针，代表宿主类的符号引用
+ * innerNameIndex:          指向常量池中 CONSTANT_Utf8_info 型常量的索引，代表这个内部类的名称，匿名内部类这项值为 0
+ *
+ */
 DEF_ATTR_START(InnerClasses) {
 public:
     u2 numberOfClasses;
@@ -374,11 +410,29 @@ public:
     u2 classIndex;
     u2 methodIndex;
 };
+
+/**
+ * 表示此字段或方法并不是由 Java 源码直接产生的，而是由编译器自行添加的
+ */
 DEF_ATTR_START(Synthetic) {};
+
+/**
+ * JDK1.5 发布后增加的属性，是一个可选的定长属性，
+ * 可以出现在类、字段表、方法表结构的属性表中。
+ *
+ * signatureIndex:      指向常量池中 CONSTANT_Utf8_info 型常量的索引，代表类签名、方法类型签名、字段类型签名
+ *
+ * 因为 Java 的伪泛型，所以用这样一个属性去记录泛型类型，弥补一些伪泛型的缺陷。
+ * （现在 Java 的反射 API 能够获取泛型类型，最终的数据来源也就是这个属性。）
+ */
 DEF_ATTR_START(Signature) {
 public:
     u2 signatureIndex;
 };
+
+/**
+ * 记录生成这个 Class 文件的源码文件的名称
+ */
 DEF_ATTR_START(SourceFile) {
 public:
     u2 sourceFileIndex;
@@ -391,6 +445,9 @@ public:
     }
 };
 
+/**
+ * 描述 Java 源码与字节码行号之间的对应关系，它不是运行时必需的属性
+ */
 DEF_ATTR_START(LineNumberTable) {
 public:
     u2 lineNumberTableLength;
@@ -405,6 +462,9 @@ public:
     }
 };
 
+/**
+ * 描述栈帧中局部变量表中的变量与 Java 源码中定义的变量之间的关系，它不是运行时必需的属性
+ */
 DEF_ATTR_START(LocalVariableTable) {
 public:
     u2 localVariableTableLength;
@@ -676,6 +736,24 @@ public:
     }
 };
 
+/**
+ * JDK1.7 发布后新增
+ *
+ * numBootstrapMethods:     引导方法限定符的数量
+ * bootstrapMethod:         该数组中每个成员指向一个引导方法的信息
+ *
+ * bootstrapMethodRef:      指向常量池中 CONSTANT_MethodHandle_info 型结构的索引
+ * numBootstrapArgument:    给出了 bootstrapArguments 数组的数量
+ * bootstrapArguments:      每个成员是一个对常量池的索引，常量池在该索引处必须是以下结构之一，
+ *                                      CONSTANT_String_info
+ *                                      CONSTANT_Class_info
+ *                                      CONSTANT_Integer_info
+ *                                      CONSTANT_Long_info
+ *                                      CONSTANT_Float_info
+ *                                      CONSTANT_Double_info
+ *                                      CONSTANT_MethodHandle_info
+ *                                      CONSTANT_MethodType_info
+ */
 DEF_ATTR_START(BootstrapMethods) {
 public:
     u2 numBootstrapMethods;
