@@ -249,7 +249,7 @@ bool JavaClass::parseConstantPool(u2 cpCount) {
             case TAG_NameAndType: {
                 slot = new CONSTANT_NameAndType();
                 dynamic_cast<CONSTANT_NameAndType*>(slot)->nameIndex = reader.readU2();
-                dynamic_cast<CONSTANT_NameAndType*>(slot)->descreptorIndex = reader.readU2();
+                dynamic_cast<CONSTANT_NameAndType*>(slot)->descriptorIndex = reader.readU2();
                 raw.constPoolInfo[i] = dynamic_cast<CONSTANT_NameAndType*>(slot);
                 break;
             }
@@ -257,7 +257,7 @@ bool JavaClass::parseConstantPool(u2 cpCount) {
                 slot = new CONSTANT_Utf8();
                 u2 len = reader.readU2();
                 dynamic_cast<CONSTANT_Utf8*>(slot)->length = len;
-                dynamic_cast<CONSTANT_Utf8*>(slot)->bytes = static_cast<u1[]>(new uint8_t[len + 1]);
+                dynamic_cast<CONSTANT_Utf8*>(slot)->bytes = static_cast<u1*>(new uint8_t[len + 1]);
                 //The utf8 string is not end with '\0' since we do not need to reserve extra 1 byte
                 for (int k = 0; k < len; k++) {
                     dynamic_cast<CONSTANT_Utf8*>(slot)->bytes[k] = reader.readU1();

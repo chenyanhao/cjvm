@@ -26,7 +26,7 @@ public:
     static void printClassFileAttrs(const JavaClass &jc);
 
     static void printSizeOfInternalTypes();
-    static void printOpCode(u1 *code, u2 index);
+    static void printOpCode(u1 *code, u4 index);
 };
 
 

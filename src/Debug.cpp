@@ -54,7 +54,7 @@ void Inspector::printConstantPool(const JavaClass &jc){
             nameAndType += (char*)jc.getString(dynamic_cast<CONSTANT_NameAndType*>(jc.raw.constPoolInfo[i])->nameIndex);
             nameAndType += " ! ";
             nameAndType += (char*)jc.getString(
-                    dynamic_cast<CONSTANT_NameAndType*>(jc.raw.constPoolInfo[i])->descreptorIndex);
+                    dynamic_cast<CONSTANT_NameAndType*>(jc.raw.constPoolInfo[i])->descriptorIndex);
             d.addCell(nameAndType);
         }
         else {
